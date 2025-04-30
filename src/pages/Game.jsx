@@ -2,11 +2,11 @@ import React, { useEffect, useRef } from "react";
 import { auth, db } from "../firebase";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 
-function Game({ onNavigate }) {
+function Game({ onNavigate, skin }) {
   const canvasRef = useRef(null);
   const birdRef = useRef(null);
   const pipesRef = useRef([]);
-  const animationRef = useRef(null);
+  const intervalRef = useRef(null);
   const gameOverRef = useRef(false);
   const scoreRef = useRef(0);
   const highScoreRef = useRef(0);
@@ -32,7 +32,7 @@ function Game({ onNavigate }) {
     canvas.height = boardHeight;
 
     const birdImg = new Image();
-    birdImg.src = "/flappybird.png";
+    birdImg.src = skin || "/flappybird.png";
     const topPipeImg = new Image();
     topPipeImg.src = "/toppipe.png";
     const bottomPipeImg = new Image();
@@ -58,15 +58,13 @@ function Game({ onNavigate }) {
       const userRef = doc(db, "users", user.uid);
       getDoc(userRef).then((docSnap) => {
         if (docSnap.exists()) {
-          const data = docSnap.data();
-          highScoreRef.current = data.highScore || 0;
+          highScoreRef.current = docSnap.data().highScore || 0;
         } else {
           setDoc(userRef, {
             displayName: user.displayName || "Unnamed User",
             email: user.email || "",
             highScore: 0,
           });
-          highScoreRef.current = 0;
         }
       });
     }
@@ -96,24 +94,20 @@ function Game({ onNavigate }) {
       pipesRef.current.push(topPipe, bottomPipe);
     };
 
-    const detectCollision = (a, b) => {
-      return (
-        a.x < b.x + b.width &&
-        a.x + a.width > b.x &&
-        a.y < b.y + b.height &&
-        a.y + a.height > b.y
-      );
-    };
+    const detectCollision = (a, b) =>
+      a.x < b.x + b.width &&
+      a.x + a.width > b.x &&
+      a.y < b.y + b.height &&
+      a.y + a.height > b.y;
 
-    const update = () => {
+    const draw = () => {
       if (gameOverRef.current) return;
+
       context.clearRect(0, 0, boardWidth, boardHeight);
 
       velocityYRef.current += gravity;
-      birdRef.current.y = Math.max(
-        birdRef.current.y + velocityYRef.current,
-        0
-      );
+      birdRef.current.y = Math.max(birdRef.current.y + velocityYRef.current, 0);
+
       context.drawImage(
         birdRef.current.img,
         birdRef.current.x,
@@ -144,10 +138,7 @@ function Game({ onNavigate }) {
         }
       });
 
-      while (
-        pipesRef.current.length > 0 &&
-        pipesRef.current[0].x < -pipeWidth
-      ) {
+      while (pipesRef.current.length && pipesRef.current[0].x < -pipeWidth) {
         pipesRef.current.shift();
       }
 
@@ -156,17 +147,17 @@ function Game({ onNavigate }) {
 
       if (gameOverRef.current) {
         context.drawImage(gameover, boardWidth / 6, boardHeight / 5, 250, 125);
-        if (scoreRef.current > highScoreRef.current) {
-          highScoreRef.current = scoreRef.current;
-          if (user) {
-            const userRef = doc(db, "users", user.uid);
-            updateDoc(userRef, { highScore: highScoreRef.current });
-          }
+
+        if (scoreRef.current > highScoreRef.current && user) {
+          const newHigh = scoreRef.current;
+          highScoreRef.current = newHigh;
+          const userRef = doc(db, "users", user.uid);
+          updateDoc(userRef, { highScore: newHigh });
         }
+
         context.fillText("High score " + highScoreRef.current, 55, 370);
         context.fillText("Score " + scoreRef.current, 110, boardHeight / 2);
       } else {
-        animationRef.current = requestAnimationFrame(update);
         context.fillText(scoreRef.current, 15, 35);
       }
     };
@@ -179,11 +170,10 @@ function Game({ onNavigate }) {
         scoreRef.current = 0;
         gameOverRef.current = false;
         velocityYRef.current = 0;
-        animationRef.current = requestAnimationFrame(update);
       }
     };
 
-    const handleKeyDown = (e) => {
+    const keyHandler = (e) => {
       if (
         e.code === "Space" ||
         e.code === "ArrowUp" ||
@@ -193,29 +183,21 @@ function Game({ onNavigate }) {
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keydown", keyHandler);
     document.addEventListener("click", handleFlap);
     document.addEventListener("touchstart", handleFlap);
+
     const pipeInterval = setInterval(placePipes, 1500);
-    birdImg.onload = () => {
-      context.drawImage(
-        birdRef.current.img,
-        birdRef.current.x,
-        birdRef.current.y,
-        birdRef.current.width,
-        birdRef.current.height
-      );
-    };
-    animationRef.current = requestAnimationFrame(update);
+    intervalRef.current = setInterval(draw, 1000 / 60); // ~60 FPS
 
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
+      clearInterval(intervalRef.current);
+      clearInterval(pipeInterval);
+      document.removeEventListener("keydown", keyHandler);
       document.removeEventListener("click", handleFlap);
       document.removeEventListener("touchstart", handleFlap);
-      clearInterval(pipeInterval);
-      cancelAnimationFrame(animationRef.current);
     };
-  }, []);
+  }, [skin]);
 
   return (
     <div className="game">
