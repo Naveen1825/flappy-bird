@@ -181,7 +181,7 @@ html, body, #root {
   display: flex;
   justify-content:space-between;
   align-items: center;
-  width: 150%;
+  width: 120%;
 }
 
 .skin-image img.locked-bird {

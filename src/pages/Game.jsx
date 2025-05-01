@@ -40,6 +40,8 @@ function Game({ onNavigate, skin }) {
     const gameover = new Image();
     gameover.src = "/gameover.png";
 
+      const isMobile = window.innerWidth <= 768;
+
     birdRef.current = {
       x: birdX,
       y: birdY,
@@ -182,10 +184,10 @@ function Game({ onNavigate, skin }) {
         handleFlap();
       }
     };
-
-    document.addEventListener("keydown", keyHandler);
+    if (!isMobile){
+      document.addEventListener("keydown", keyHandler);
+    }
     document.addEventListener("click", handleFlap);
-    document.addEventListener("touchstart", handleFlap);
 
     const pipeInterval = setInterval(placePipes, 1500);
     intervalRef.current = setInterval(draw, 1000 / 60); // ~60 FPS
@@ -195,7 +197,6 @@ function Game({ onNavigate, skin }) {
       clearInterval(pipeInterval);
       document.removeEventListener("keydown", keyHandler);
       document.removeEventListener("click", handleFlap);
-      document.removeEventListener("touchstart", handleFlap);
     };
   }, [skin]);
 
