@@ -5,8 +5,8 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 
 const skinOptions = [
   { src: "/flappybird.png", name: "Classic", unlockScore: 0 },
-  { src: "/flappybird-red.png", name: "Blue", unlockScore: 60 },
-  { src: "/flappybird-blue.png", name: "Red", unlockScore: 100 },
+  { src: "/flappybird-red.png", name: "Red", unlockScore: 60 },
+  { src: "/flappybird-blue.png", name: "Niggaesh", unlockScore: 100 },
 ];
 
 function Home({ user, onNavigate, selectedSkin, setSelectedSkin }) {
