@@ -28,21 +28,9 @@ function Leaderboard({ onNavigate }) {
     <div className="leaderboard">
       <h1 style={{ marginBottom: "2rem" }}>🏆 Leaderboard 🏆</h1>
 
-      <div style={{ width: "90%", maxWidth: "600px" }}>
+      <div className="leaderboard-list">
         {leaders.map((user, index) => (
-          <div
-            key={user.id}
-            style={{
-              marginBottom: "1rem",
-              padding: "1rem",
-              background: "#7ED957",
-              border: "4px solid #355E3B",
-              boxShadow: "4px 4px 0px #355E3B",
-              fontFamily: "'Press Start 2P', cursive",
-              fontSize: "0.8rem",
-              imageRendering: "pixelated",
-            }}
-          >
+          <div className="leaderboard-entry" key={user.id}>
             #{index + 1} 👤 {user.displayName || "Unnamed User"}
             <br />
             🏅 High Score: {user.highScore || 0}
